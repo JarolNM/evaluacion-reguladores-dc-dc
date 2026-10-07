@@ -1,0 +1,677 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{stfloats}
+\usepackage[section]{placeins}
+% Floats: permiten ubicarse cerca de su texto sin dejar huecos
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{5}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue}
+
+\begin{document}
+
+\title{Implementación, Simulación y Análisis Comparativo de Eficiencia y Costo-Beneficio en Fuentes de Alimentación Lineales y Conmutadas}
+
+\author{\IEEEauthorblockN{Jarol Nicolas Molano Lopez}
+\IEEEauthorblockA{\textit{Ingeniería Electrónica - E3T} \\
+\textit{Universidad Industrial de Santander}\\
+Bucaramanga, Colombia \\
+jarol2230391@correo.uis.edu.co}
+\and
+\IEEEauthorblockN{Elkin Fernando Largo Gómez}
+\IEEEauthorblockA{\textit{Ingeniería Electrónica - E3T} \\
+\textit{Universidad Industrial de Santander}\\
+Bucaramanga, Colombia \\
+elkin2182334@correo.uis.edu.co}
+}
+
+\maketitle
+
+\begin{abstract}
+Este documento presenta el diseño, simulación, implementación experimental y análisis comparativo de rendimiento entre una fuente de alimentación lineal basada en el regulador LM317 y una fuente conmutada tipo Buck basada en el LM2596. Ambos sistemas fueron seleccionados y verificados para energizar una carga nominal de 5 VDC a 1 A (resistencia de $5\,\Omega$) a partir de un suministro de entrada de 8 VDC a 12 VDC con componente de rizado a 120 Hz (caracterizado experimentalmente a 12 VDC). La evaluación contempla simulaciones en OrCAD, barridos de temperatura y de carga, y validación experimental en laboratorio. Los resultados experimentales muestran que el LM2596 alcanza una eficiencia de 69.2\% frente a 38.3\% del regulador lineal, manteniendo en ambos casos un rizado pico a pico inferior a los 50 mV exigidos. Se concluye con una matriz tamaño-costo-beneficio para guiar la elección de la topología óptima en aplicaciones de electrónica industrial.
+\end{abstract}
+
+\smallskip
+\begin{IEEEkeywords}
+regulador lineal, regulador conmutado, LM317, LM2596, eficiencia, rizado
+\end{IEEEkeywords}
+
+%==========================================================
+\section{\textbf{Introducción}}
+La mayoría de los sistemas electrónicos requieren una tensión de alimentación estable y libre de perturbaciones, independientemente de las variaciones en la fuente primaria. Para ello se emplean dos grandes familias de reguladores: los lineales y los conmutados. Los reguladores lineales operan con un elemento de paso en zona activa que disipa como calor la diferencia entre la tensión de entrada y la de salida. Esto les da bajo ruido, buen rechazo al rizado y simplicidad de diseño, pero su eficiencia queda limitada aproximadamente por la relación $V_{out}/V_{in}$ \cite{hart}. Los reguladores conmutados, como el convertidor reductor (Buck), controlan la transferencia de energía mediante un interruptor que opera a alta frecuencia junto con elementos de almacenamiento inductivo y capacitivo. Así alcanzan eficiencias típicas superiores al 80\%, a costa de mayor complejidad y de un rizado a la frecuencia de conmutación \cite{rashid}.
+
+En este trabajo se seleccionan, simulan y evalúan experimentalmente un regulador lineal basado en el LM317 y uno conmutado basado en el LM2596. Ambos deben alimentar una carga de 5 VDC a 1 A a partir de una entrada variable entre 8 y 12 VDC con rizado de 120 Hz, manteniendo un rizado de salida inferior a 50 mV. Con base en los resultados de eficiencia, rizado y comportamiento térmico se determina cuál de las dos alternativas ofrece la mejor relación tamaño-costo-beneficio.
+
+\FloatBarrier
+\subsection{\textbf{Objetivos}}
+\subsubsection{\textbf{Objetivo General}}
+Evaluar comparativamente un regulador lineal (LM317) y uno conmutado (LM2596) para alimentar una carga de 5 VDC a 1 A, con el fin de determinar la alternativa con mejor relación tamaño-costo-beneficio.
+
+\medskip
+\subsubsection{\textbf{Objetivos Específicos}}
+\begin{itemize}
+    \item Seleccionar un módulo regulador lineal y uno conmutado a partir del análisis de hojas de datos de diferentes circuitos integrados comerciales.
+    \item Simular el comportamiento de ambos reguladores ante una entrada variable de 8 a 12 VDC con rizado de 120 Hz.
+    \item Caracterizar experimentalmente la eficiencia, el rizado de salida y la temperatura de operación de ambos módulos.
+    \item Comparar los resultados de simulación y laboratorio mediante una matriz tamaño-costo-beneficio.
+\end{itemize}
+
+%==========================================================
+\section{\textbf{Selección de Módulos}}
+
+Para la selección de los reguladores se evaluaron cinco alternativas lineales y cinco conmutadas. Se tuvieron en cuenta la capacidad de corriente, la posibilidad de ajuste de la tensión de salida, el rechazo al rizado, la eficiencia, el comportamiento térmico y el costo comercial del módulo. Las hojas de datos y el registro fotográfico de cada módulo se encuentran en el repositorio del proyecto (Tabla~\ref{tab:recursos_datasheets_imagenes}).
+
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.4}
+\caption{Componentes evaluados, hojas de datos técnicas (datasheets) y registro fotográfico en repositorio GitHub.\newline Hipervínculos directos a datasheets e imágenes.}
+\begin{center}
+\resizebox{0.98\textwidth}{!}{%
+\begin{tabular}{lll | lll}
+\hline
+\multicolumn{3}{c|}{\textbf{MÓDULOS DE REGULACIÓN LINEAL}} & \multicolumn{3}{c}{\textbf{MÓDULOS DE REGULACIÓN CONMUTADA (BUCK)}} \\
+\hline
+\textbf{Componente} & \textbf{Hoja de Datos} & \textbf{Imagen del Módulo} & \textbf{Componente} & \textbf{Hoja de Datos} & \textbf{Imagen del Módulo} \\ [2pt]
+\hline
+LM7805 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/LM7805.PDF}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/imagenes_lineal/LM7805.jpeg}{\color{blue}Ver Imagen} & LM2576 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/lm2576.pdf}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/imagenes_conmutado/LM2576.jpg}{\color{blue}Ver Imagen} \\
+L78S05 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/L78S00.PDF}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/imagenes_lineal/L78S00.jpg}{\color{blue}Ver Imagen} & XL4015 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/XL4015.PDF}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/imagenes_conmutado/XL4015.jpg}{\color{blue}Ver Imagen} \\
+AMS1117 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/AMS1117-S.PDF}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/imagenes_lineal/AMS1117.jpeg}{\color{blue}Ver Imagen} & MP1584 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/MP1584.PDF}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/imagenes_conmutado/MP1584.jpg}{\color{blue}Ver Imagen} \\
+LM338 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/lm338.pdf}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/imagenes_lineal/LM338.png}{\color{blue}Ver Imagen} & Mini-360 & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/MINI360.pdf}{\color{blue}Ver Datasheet} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/imagenes_conmutado/Mini-360.jpg}{\color{blue}Ver Imagen} \\
+\textbf{LM317 (Seleccionado)} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/lm317.pdf}{\color{blue}\textbf{Ver Datasheet}} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/lineales/imagenes_lineal/LM317.jpg}{\color{blue}\textbf{Ver Imagen}} & \textbf{LM2596 (Seleccionado)} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/lm2596.pdf}{\color{blue}\textbf{Ver Datasheet}} & \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/blob/main/datasheets/conmutados/imagenes_conmutado/Lm2596.jpg}{\color{blue}\textbf{Ver Imagen}} \\[2pt]
+\hline
+\end{tabular}%
+}
+\label{tab:recursos_datasheets_imagenes}
+\end{center}
+\end{table*}
+
+En la Tabla~\ref{tab:comparativa_modulos} se resumen las características principales y el precio de cada alternativa.
+
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Comparación de características principales y precio de los módulos evaluados. \newline Hipervínculos directos a precios de referencia.}
+\begin{center}
+\resizebox{0.98\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|}
+\hline
+\multicolumn{8}{|c|}{\textbf{REGULADORES LINEALES}} \\
+\hline
+\textbf{Módulo} & \textbf{$I_{max}$} & \textbf{$V_{out}$} & \textbf{PSRR (120 Hz)} & \textbf{$\eta$ (8--12 V)} & \textbf{Gestión térmica a 1 A} & \textbf{Precio} & \textbf{Decisión} \\
+\hline
+MC7805 & 1.0 A & Fijo 5 V & 62 dB & 42--63\% & Crítica (sin margen) & \href{https://www.julpin.com.co/inicio/reguladores-y-alimentacion/1034-regulador-de-voltaje-l7805.html}{\color{blue}\$12.000 COP} & Rechazado \\
+\hline
+L78S05$^{*}$ & 2.0 A & Fijo 5 V & 54 dB & 42--63\% & Requiere disipador & \href{https://www.electronicoscaldas.com/es/reguladores-referencias-conversores-de-voltaje/1205-regulador-de-5v-y-2a-l78s05.html}{\color{blue}\$2.908 COP} & Rechazado \\
+\hline
+AMS1117-5.0 & 0.8 A & Fijo 5 V & N/A & 42--63\% & Insuficiente & \href{https://www.vistronica.com/fuente-de-voltaje/modulo-ams1117-fuente-de-5v-detail.html}{\color{blue}\$1.726 COP} & Rechazado \\
+\hline
+LM338$^{\dagger}$ & 5.0 A & Ajustable & 60--75 dB & 42--63\% & Sobredimensionado & \href{https://www.amazon.com/dp/B09KX3M5WX}{\color{blue}US\$9.99} & Rechazado \\
+\hline
+\textbf{LM317} & \textbf{1.5 A} & \textbf{Ajustable} & \textbf{80 dB} & \textbf{42--63\%} & \textbf{Disipador incluido} & \href{https://ja-bots.com/producto/modulo-convertidor-lm317-regulador-de-voltaje-ajustable/}{\color{blue}\textbf{\$7.000 COP + IVA}}& \textbf{Seleccionado} \\
+\hline
+\multicolumn{8}{|c|}{\textbf{REGULADORES CONMUTADOS (BUCK)}} \\
+\hline
+\textbf{Módulo} & \textbf{$I_{max}$} & \textbf{$V_{out}$} & \textbf{$f_{sw}$} & \textbf{$\eta$ típica} & \textbf{Gestión térmica a 1 A} & \textbf{Precio} & \textbf{Decisión} \\
+\hline
+LM2576 & 3.0 A & Ajustable & 52 kHz & 75--80\% & Buena (pasivos grandes) & \href{https://www.electronicaplugandplay.com/baterias-y-fuentes-de-poder/product/510-adj-source-lm2576hv}{\color{blue}\$27.500 COP} & Rechazado \\
+\hline
+XL4015 & 5.0 A & Ajustable & 180 kHz & Hasta 96\% & Sobredimensionado & \href{https://www.vistronica.com/fuente-de-voltaje/conversores-dc-dc/convertidor-dc-dc-buck-xl4015-de-5a-con-voltaje-y-corriente-ajustable-detail.html}{\color{blue}\$13.823 COP} & Rechazado \\
+\hline
+MP1584 & 3.0 A & Ajustable & Hasta 1.5 MHz & $>$90\% & Buena (trimmer frágil) & \href{https://electronilab.co/tienda/modulo-mp1584-convertidor-de-voltaje-dc-dc-buck-0-8v-20v-3a/}{\color{blue}\$5.300 COP} & Rechazado \\
+\hline
+Mini-360 & 1.8 A & Ajustable & 340 kHz & $>$90\% & Crítica en continuo & \href{https://www.mactronica.com.co/convertidor-dc-dc-mini-360-reductor-mp2307-3a-475v-a-23v}{\color{blue}\$5.000 COP} & Rechazado \\
+\hline
+\textbf{LM2596} & \textbf{3.0 A} & \textbf{Ajustable} & \textbf{150 kHz} & \textbf{$>$80\%} & \textbf{Sin disipador externo} & \href{https://electronilab.co/tienda/modulo-lm2596-convertidor-de-voltaje-dc-dc-buck-1-25v-35v/}{\color{blue}\textbf{\$6.900 COP}} & \textbf{Seleccionado} \\
+\hline
+\multicolumn{8}{|l|}{\footnotesize $^{*}$No se encontró módulo comercial; se reporta el precio del integrado. \quad $^{\dagger}$Sin distribuidor nacional del módulo; precio de referencia internacional.} \\
+\hline
+\end{tabular}%
+}
+\label{tab:comparativa_modulos}
+\end{center}
+\end{table*}
+
+\FloatBarrier
+\subsection{\textbf{Justificación del Módulo Lineal}}
+Se descartaron el MC7805 \cite{mc7805} y el AMS1117 \cite{ams1117} porque su corriente máxima (1.0 A y 0.8 A) no deja margen frente a la carga de 1 A. El L78S05 \cite{l78s05} cumple en corriente, pero su salida fija no permite compensar caídas ni tolerancias. El LM338 \cite{lm338} cumple todos los requisitos técnicos, pero está sobredimensionado y su costo es mayor. Se seleccionó el módulo LM317 \cite{lm317} porque ofrece 1.5 A, salida ajustable mediante trimmer, el mayor rechazo al rizado del grupo (80 dB) e incluye disipador para manejar los cerca de 7 W disipados con entrada de 12 V.
+
+\FloatBarrier
+\subsection{\textbf{Justificación del Módulo Conmutado}}
+El LM2576 \cite{lm2576} se descartó por su baja frecuencia de conmutación, que exige inductores y capacitores más voluminosos. El XL4015 \cite{xl4015} está sobredimensionado para 1 A. El MP1584 \cite{mp1584} usa un trimmer SMD difícil de calibrar. El Mini-360 (MP2307) \cite{mp2307} presenta calentamiento excesivo en operación continua a 1 A. Se seleccionó el LM2596 \cite{lm2596} porque su frecuencia de 150 kHz equilibra el tamaño de los pasivos y las pérdidas por conmutación. Además, su hoja de datos reporta eficiencias típicas superiores al 80\%, opera sin disipador externo y es de bajo costo y amplia disponibilidad comercial.
+
+%==========================================================
+\section{\textbf{Regulador Lineal (LM317)}}
+
+\FloatBarrier
+\subsection{\textbf{Descripción del Módulo}}
+El módulo comercial seleccionado integra el regulador LM317 en encapsulado TO-220 montado sobre un disipador de aluminio, junto con la red resistiva de realimentación ($R_1$ y potenciómetro multivuelta) y los capacitores de desacople de entrada y salida recomendados por el fabricante. La tensión de salida se ajusta mediante el potenciómetro hasta obtener 5.0 VDC sobre la carga (Fig.~\ref{fig:lin_modulo}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=0.7\columnwidth]{lin_modulo.png}}
+\caption{Módulo comercial basado en el regulador lineal ajustable LM317, con disipador de aluminio, potenciómetro multivuelta de ajuste y borneras de entrada y salida.}
+\label{fig:lin_modulo}
+\end{figure}
+
+\FloatBarrier
+\subsection{\textbf{Simulación}}
+La simulación del regulador lineal se realizó en OrCAD PSpice con el fin de verificar la tensión de salida, la eficiencia y el rizado bajo las condiciones de operación del proyecto: entrada variable entre 8 y 12 VDC con componente de 120 Hz y carga resistiva de $5\,\Omega$.
+
+\subsubsection{\textbf{Esquemático de Simulación}}
+En la Fig.~\ref{fig:lin_esquematico} se presenta el esquemático utilizado para simular el regulador lineal basado en el LM317. La fuente de entrada se modela como una tensión DC con una componente senoidal superpuesta de 120 Hz, que representa el rizado de una etapa de rectificación previa.
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_esquematico.PDF}}
+\caption{Esquemático de simulación del regulador lineal LM317 en OrCAD PSpice: fuente de entrada con rizado de 120 Hz, red de realimentación $R_1$--$R_2$, capacitores de filtrado y carga resistiva de $5\,\Omega$.}
+\label{fig:lin_esquematico}
+\end{figure}
+
+\subsubsection{\textbf{Potencia de Entrada, Potencia de Salida y Eficiencia}}
+La potencia de entrada se calcula como $P_{in} = V_{in} \cdot I_{in}$ y la potencia de salida como $P_{out} = V_{out} \cdot I_{out}$, de modo que la eficiencia resulta:
+\begin{equation}
+\eta = \frac{P_{out}}{P_{in}} \times 100\%.
+\end{equation}
+
+Las Figs.~\ref{fig:lin_potencias} y \ref{fig:lin_eficiencia} muestran los valores promedio de tensión, corriente y la eficiencia resultante. Como es propio de un regulador lineal, la corriente de entrada es prácticamente igual a la de salida, por lo que la eficiencia queda limitada por la relación $V_{out}/V_{in}$.
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_potencias.pdf}}
+\caption{Valores promedio de tensión y corriente de entrada y salida del regulador lineal LM317 obtenidos en simulación.}
+\label{fig:lin_potencias}
+\end{figure}
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_eficiencia.pdf}}
+\caption{Eficiencia del regulador lineal LM317 calculada a partir de las potencias promedio de entrada y salida en simulación.}
+\label{fig:lin_eficiencia}
+\end{figure}
+
+\subsubsection{\textbf{Voltaje de Salida y Rizado}}
+La Fig.~\ref{fig:lin_rizado_sim} muestra el voltaje de salida junto con el rizado pico a pico. El alto rechazo al rizado del LM317 atenúa la componente de 120 Hz presente en la entrada, de modo que el rizado a la salida queda muy por debajo del límite de 50 mV exigido.
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_rizado_sim.pdf}}
+\caption{Forma de onda de la tensión de salida del regulador lineal LM317 en simulación, con medición del rizado pico a pico.}
+\label{fig:lin_rizado_sim}
+\end{figure}
+
+\subsubsection{\textbf{Barrido de Temperatura}}
+Se realizó un barrido paramétrico de la temperatura de operación para evaluar la estabilidad térmica de la tensión y la corriente en la carga (Fig.~\ref{fig:lin_temperatura}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_temperatura.pdf}}
+\caption{Tensión y corriente en la carga del regulador lineal LM317 frente a un barrido paramétrico de temperatura.}
+\label{fig:lin_temperatura}
+\end{figure}
+
+\subsubsection{\textbf{Barrido de Carga}}
+Para evaluar la capacidad de regulación de carga del LM317 se realizó un barrido paramétrico de la resistencia de carga $R_L$ entre 4 y 50~$\Omega$ con pasos de 2~$\Omega$, lo que corresponde a corrientes de salida entre aproximadamente 0.1 y 1.25~A. En cada punto se calcularon la tensión y la corriente promedio en la carga dentro de la ventana de estado estable de 300 a 500~ms.
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_barrido_voltaje.pdf}}
+\caption{Tensión de salida promedio del regulador lineal LM317 frente a un barrido paramétrico de la resistencia de carga ($R_L$ de 4 a 50~$\Omega$). La línea punteada indica el punto de operación nominal ($R_L = 5\,\Omega$, 1~A).}
+\label{fig:lin_barrido_voltaje}
+\end{figure}
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{lin_barrido_corriente.pdf}}
+\caption{Corriente de salida promedio del regulador lineal LM317 frente al barrido de la resistencia de carga, comparada con la curva ideal $I_{out} = 5\,\text{V}/R_L$ y con la corriente máxima del dispositivo (1.5~A).}
+\label{fig:lin_barrido_corriente}
+\end{figure}
+
+La Fig.~\ref{fig:lin_barrido_voltaje} muestra que la tensión de salida permanece prácticamente constante en todo el rango evaluado. Varía apenas de 5.0228~V con la carga más ligera ($R_L = 50\,\Omega$) a 5.0162~V con la más exigente ($R_L = 4\,\Omega$), una excursión total de $\Delta V_{out} = 6.56$~mV. Esto equivale a una regulación de carga de
+\begin{equation}
+\text{Reg}_{carga} = \frac{V_{out,\text{máx}} - V_{out,\text{mín}}}{V_{out,\text{máx}}} \times 100\% = 0.13\%,
+\end{equation}
+valor del mismo orden que el 0.1\% típico reportado en la hoja de datos del LM317 \cite{lm317}. En el punto nominal de operación ($R_L = 5\,\Omega$) la tensión de salida es de aproximadamente 5.018~V, lo que cumple con el requisito de 5~VDC del proyecto.
+
+La forma de la curva tiene una explicación física. La tensión cae con mayor pendiente para valores bajos de $R_L$ porque en esa región la corriente cambia mucho con cada paso de resistencia. Si la caída se expresa en función de la corriente, el comportamiento es casi lineal y equivale a una resistencia de salida efectiva de
+\begin{equation}
+R_{o} \approx \frac{\Delta V_{out}}{\Delta I_{out}} = \frac{6.56\text{ mV}}{1.254\text{ A} - 0.100\text{ A}} \approx 5.7\text{ m}\Omega.
+\end{equation}
+Este valor tan bajo se debe a la realimentación negativa del LM317, que compara continuamente la tensión entre los terminales OUT y ADJ con su referencia interna de 1.25~V y corrige el estado del transistor de paso para compensar el aumento de corriente.
+
+Por su parte, la Fig.~\ref{fig:lin_barrido_corriente} muestra que la corriente de salida sigue con exactitud la curva ideal $I_{out} = 5\,\text{V}/R_L$ en todo el barrido. Va de 0.100~A en 50~$\Omega$ hasta 1.254~A en 4~$\Omega$, con aproximadamente 1.004~A en el punto nominal. La coincidencia con la curva ideal confirma que el regulador entrega la corriente demandada por la carga sin entrar en limitación. Incluso en la condición de sobrecarga del 25\% ($R_L = 4\,\Omega$), la corriente se mantiene por debajo del límite de 1.5~A del LM317, lo que deja un margen de seguridad para la operación a 1~A.
+
+En conjunto, ambas figuras muestran que, ante una variación de la corriente de carga superior a un orden de magnitud, el LM317 mantiene la tensión de salida dentro de un margen de pocos milivoltios. Este resultado valida su capacidad de regulación de carga para la aplicación propuesta.
+
+\smallskip
+\subsubsection{\textbf{Resultados de la Simulación}}
+La Tabla~\ref{tab:lin_resultados_sim} resume los valores promedio obtenidos. La eficiencia de 44.3\% y la potencia disipada de 6.33 W confirman que la mayor parte de la energía se pierde como calor en el elemento de paso, mientras que el rizado de 1.204 mV cumple holgadamente la especificación.
+
+\begin{table}[!htb]
+\caption{Resultados de la simulación del regulador lineal LM317.}
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Parámetro} & \textbf{Valor} \\
+\hline
+$V_{in}$ promedio (V) & 11.258 \\
+\hline
+$I_{in}$ promedio (A) & 1.0102 \\
+\hline
+$V_{out}$ promedio (V) & 5.0191 \\
+\hline
+$I_{out}$ promedio (A) & 1.0038 \\
+\hline
+$P_{in}$ (W) & 11.37 \\
+\hline
+$P_{out}$ (W) & 5.04 \\
+\hline
+Potencia disipada (W) & 6.33 \\
+\hline
+$\eta$ (\%) & 44.3 \\
+\hline
+Rizado pico a pico (mV) & 1.204 \\
+\hline
+\end{tabular}
+\label{tab:lin_resultados_sim}
+\end{center}
+\end{table}
+
+\FloatBarrier
+\subsection{\textbf{Resultados de Laboratorio}}
+La caracterización y validación experimental se llevó a cabo interconectando los módulos reguladores a la red eléctrica del laboratorio ($110\text{ VAC} / 60\text{ Hz}$) mediante un transformador reductor de tensión. Para simular las condiciones de operación nominal, se acopló una carga resistiva pura de $5.0\,\Omega$, estableciendo una demanda de corriente continua de $1.0\text{ A}$ a una tensión de salida regulada de $5.0\text{ VDC}$.
+
+La medición de magnitudes se efectuó mediante un multímetro digital (FLUKE), osciloscopio digital (GW Instek GDS-2062) en acoplamiento AC y DC, mientras que el comportamiento térmico en estado estacionario se cuantificó mediante termometría infrarroja (Berrcom JXB-178) enfocada en la cápsula de los semiconductores.
+
+El registro completo de evidencias experimentales (fotografías del montaje, capturas del osciloscopio, lecturas de los instrumentos y videos de termometría) de ambos módulos se encuentra disponible en el repositorio del proyecto: \href{https://github.com/JarolNM/evaluacion-reguladores-dc-dc/tree/main/evidencias_laboratorio}{\textcolor{blue}{\underline{\textbf{Evidencias de laboratorio (clic aquí)}}}}.
+
+\subsubsection{\textbf{Montaje Experimental}}
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=0.6\columnwidth]{lin_montaje.png}}
+\caption{Montaje experimental del regulador lineal LM317: transformador reductor y etapa de rectificación, módulo bajo prueba, carga resistiva de $5\,\Omega$ e instrumentos de medición.}
+\label{fig:lin_montaje}
+\end{figure}
+
+\subsubsection{\textbf{Potencias y Eficiencia}}
+La Tabla~\ref{tab:lin_resultados_lab} presenta las potencias, la eficiencia y el rizado medidos para una tensión de entrada de 12 VDC. La potencia de 4.84~W entregada a la carga de $5\,\Omega$ corresponde a una tensión de salida efectiva de aproximadamente 4.92~V.
+
+\begin{table}[!htb]
+\caption{Resultados experimentales del regulador lineal LM317.}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{$V_{in}$ (V)} & \textbf{$P_{in}$ (W)} & \textbf{$P_{out}$ (W)} & \textbf{$\eta$ (\%)} & \textbf{Rizado (mV)} \\
+\hline
+12 & 12.64 & 4.84 & 38.3 & 14.4 \\
+\hline
+\end{tabular}
+\label{tab:lin_resultados_lab}
+\end{center}
+\end{table}
+
+\subsubsection{\textbf{Rizado}}
+El rizado a la salida se midió con el osciloscopio en acoplamiento AC, operando el módulo a carga nominal (Fig.~\ref{fig:lin_rizado_real}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{rizado_lineal.jpeg}}
+\caption{Rizado de la tensión de salida del regulador lineal LM317 medido con osciloscopio en acoplamiento AC a carga nominal.}
+\label{fig:lin_rizado_real}
+\end{figure}
+
+\subsubsection{\textbf{Temperatura}}
+La temperatura del encapsulado y del disipador se registró con termómetro infrarrojo durante la operación a carga nominal. Ver video de \href{https://youtube.com/shorts/fBBQKPr8xtA}{Temperatura modulo Lineal}.
+
+\FloatBarrier
+\subsection{\textbf{Análisis Térmico}}
+
+\subsubsection{\textbf{Modelo Circuital Equivalente}}
+El comportamiento térmico del regulador se modela mediante la analogía eléctrica de la ley de Ohm térmica. La potencia disipada actúa como fuente de corriente y las resistencias térmicas en serie representan los caminos de transferencia de calor desde la juntura hasta el ambiente:
+\begin{equation}
+T_J = T_A + P_{loss} \cdot \theta_{JA}.
+\label{eq:ley_ohm_termica}
+\end{equation}
+
+\begin{equation}
+\theta_{JA\_efectivo} = \theta_{JC} + \theta_{CS} + \theta_{SA}.
+\label{eq:resistencia_descompuesta}
+\end{equation}
+
+\subsubsection{\textbf{Disipación de Potencia en el LM317}}
+En el regulador lineal la potencia disipada corresponde a la caída de tensión sobre el elemento de paso multiplicada por la corriente de carga. La condición más crítica se presenta con la entrada máxima de 12 V. Idealmente:
+\begin{equation}
+P_{loss\_LM317} = (V_{in\_DC} - V_{out\_DC}) \cdot I_{out\_DC} + V_{in\_DC} \cdot I_{ADJ}.
+\label{eq:potencia_lineal}
+\end{equation}
+
+\begin{equation}
+P_{loss\_LM317} = (12\text{ V} - 5\text{ V}) \cdot 1\text{ A} = 7.0\text{ W}.
+\end{equation}
+
+En el laboratorio la potencia disipada fue $P_{in} - P_{out} = 12.64\text{ W} - 4.84\text{ W} = 7.80\text{ W}$, ligeramente mayor que el valor ideal por las caídas adicionales en el módulo. A partir de la temperatura de encapsulado registrada al final de la prueba ($T_C = 68.5\,^{\circ}$C, ver video), se estima la resistencia térmica efectiva del disipador incluido en el módulo:
+\begin{equation}
+\begin{split}
+\theta_{SA\_exp} &= \frac{T_C - T_A}{P_{loss\_LM317}} - \theta_{CS} \\[10pt]
+&= \frac{68.5\,^{\circ}\text{C} - 24.0\,^{\circ}\text{C}}{7.80\text{ W}} - 0.5\,^{\circ}\text{C/W} = 5.2\,^{\circ}\text{C/W}.
+\end{split}
+\end{equation}
+
+%==========================================================
+\section{\textbf{Regulador Conmutado (LM2596)}}
+
+\FloatBarrier
+\subsection{\textbf{Descripción del Módulo}}
+El módulo comercial seleccionado integra el convertidor LM2596 en encapsulado TO-263, el inductor de almacenamiento, el diodo Schottky de rueda libre, los capacitores electrolíticos de entrada y salida y un potenciómetro multivuelta para el ajuste de la tensión de salida (Fig.~\ref{fig:con_modulo}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=0.5\columnwidth]{con_modulo.jpg}}
+\caption{Módulo comercial basado en el convertidor reductor LM2596, con inductor de potencia, diodo Schottky, capacitores electrolíticos de filtrado y potenciómetro multivuelta de ajuste.}
+\label{fig:con_modulo}
+\end{figure}
+
+\FloatBarrier
+\subsection{\textbf{Simulación}}
+La simulación del convertidor conmutado se realizó en OrCAD PSpice bajo las mismas condiciones del regulador lineal, con el fin de comparar ambos sistemas en igualdad de condiciones.
+
+\subsubsection{\textbf{Esquemático de Simulación}}
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=0.7\columnwidth]{con_esquematico.pdf}}
+\caption{Esquemático de simulación del convertidor reductor LM2596 en OrCAD PSpice: fuente de entrada con rizado de 120 Hz, inductor de almacenamiento, diodo Schottky, red de realimentación, capacitor de salida y carga resistiva de $5\,\Omega$.}
+\label{fig:con_esquematico}
+\end{figure}
+
+\subsubsection{\textbf{Potencia de Entrada, Potencia de Salida y Eficiencia}}
+Las potencias y la eficiencia se calculan con las mismas expresiones empleadas para el regulador lineal. A diferencia de este, en el convertidor conmutado la corriente promedio de entrada es menor que la de salida, lo que se traduce en una eficiencia considerablemente mayor (Figs.~\ref{fig:con_potencias} y \ref{fig:con_eficiencia}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{con_potencias.pdf}}
+\caption{Potencias promedio de entrada y salida del convertidor reductor LM2596 obtenidas en simulación.}
+\label{fig:con_potencias}
+\end{figure}
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{con_eficiencia.pdf}}
+\caption{Eficiencia del convertidor reductor LM2596 calculada a partir de las potencias promedio de entrada y salida en simulación.}
+\label{fig:con_eficiencia}
+\end{figure}
+
+\subsubsection{\textbf{Voltaje de Salida y Rizado}}
+En el convertidor conmutado el rizado de salida está dominado por la componente de la frecuencia de conmutación de 150 kHz, filtrada por el inductor y el capacitor de salida (Fig.~\ref{fig:con_rizado_sim}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{con_rizado_sim.pdf}}
+\caption{Forma de onda de la tensión de salida del convertidor reductor LM2596 en simulación, con medición del rizado pico a pico.}
+\label{fig:con_rizado_sim}
+\end{figure}
+
+\subsubsection{\textbf{Barrido de Temperatura}}
+Para evaluar la estabilidad térmica del convertidor se repitió la simulación transitoria a diferentes temperaturas de operación entre 10 y 45~$^{\circ}$C. En cada caso se calculó la tensión de salida promedio en la ventana de estado estable comprendida entre 67.6 y 68.3~ms (Fig.~\ref{fig:con_temperatura}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{con_temperatura.pdf}}
+\caption{Tensión de salida promedio del convertidor reductor LM2596 en estado estable frente a la temperatura de operación. La línea discontinua indica el valor medio y la línea punteada la temperatura nominal de simulación (27~$^{\circ}$C).}
+\label{fig:con_temperatura}
+\end{figure}
+
+Como se observa en la Fig.~\ref{fig:con_temperatura}, la tensión de salida permanece prácticamente invariante en todo el rango evaluado. Su valor medio es de 4.9602~V y la excursión máxima entre temperaturas es de apenas $\Delta V_{out} = 0.18$~mV, lo que representa una variación relativa inferior al 0.004\%. Un ajuste lineal de los datos arroja un coeficiente de temperatura aproximado de $3.4\,\mu\text{V}/^{\circ}\text{C}$, equivalente a menos de 1~ppm/$^{\circ}$C. Las pequeñas fluctuaciones entre puntos no siguen una tendencia definida, por lo que se atribuyen a la resolución numérica del promedio sobre una ventana finita de conmutación más que a un efecto térmico real.
+
+Este comportamiento se explica por dos factores. Primero, el lazo de realimentación del LM2596 compara continuamente la tensión del pin FEEDBACK con su referencia interna y ajusta el ciclo de trabajo, compensando las variaciones térmicas de la caída en el diodo Schottky 1N5822 y en los demás elementos de potencia. Segundo, el modelo transitorio del fabricante define sus componentes internos con coeficientes de temperatura nulos y una referencia constante de 1.235~V, de modo que la simulación no reproduce la deriva térmica propia del circuito integrado. Por esta razón, el resultado debe interpretarse como la capacidad del lazo de control para rechazar las variaciones térmicas de los componentes externos. El comportamiento térmico real del módulo se evaluó experimentalmente mediante termometría infrarroja.
+
+Cabe señalar que la tensión de salida simulada, cercana a 4.96~V, se encuentra un 0.8\% por debajo del valor nominal de 5~V. Esta diferencia se debe a la relación del divisor resistivo de realimentación empleado en la simulación y se corrige en el módulo físico mediante el ajuste del potenciómetro multivuelta.
+
+\subsubsection{\textbf{Barrido de Carga}}
+Siguiendo el mismo procedimiento empleado para el regulador lineal, se realizó un barrido paramétrico de la resistencia de carga $R_L$ con los valores 4, 5, 6, 8, 10, 15, 20, 30 y 50~$\Omega$, lo que cubre corrientes de salida entre aproximadamente 0.1 y 1.24~A. La tensión y la corriente promedio en la carga se calcularon en la ventana de estado estable comprendida entre 67.6 y 68.2~ms.
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{con_barrido_voltaje.pdf}}
+\caption{Tensión de salida promedio del convertidor reductor LM2596 frente a un barrido paramétrico de la resistencia de carga ($R_L$ de 4 a 50~$\Omega$). La línea discontinua indica el punto de operación nominal ($R_L = 5\,\Omega$, 1~A).}
+\label{fig:con_barrido_voltaje}
+\end{figure}
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{con_barrido_corriente.pdf}}
+\caption{Corriente de salida promedio del convertidor reductor LM2596 frente al barrido de la resistencia de carga, comparada con la curva ideal $I_{out} = V_{out}/R_L$ y con la corriente máxima del dispositivo (3~A).}
+\label{fig:con_barrido_corriente}
+\end{figure}
+
+La Fig.~\ref{fig:con_barrido_voltaje} muestra que la tensión de salida del LM2596 permanece prácticamente constante en todo el rango evaluado. Pasa de 4.9612~V con la carga más ligera ($R_L = 50\,\Omega$) a 4.9597~V con la más exigente ($R_L = 4\,\Omega$), una excursión total de apenas $\Delta V_{out} = 1.51$~mV. Esto corresponde a una regulación de carga de
+\begin{equation}
+\text{Reg}_{carga} = \frac{V_{out,\text{máx}} - V_{out,\text{mín}}}{V_{out,\text{máx}}} \times 100\% = 0.030\%.
+\end{equation}
+En el punto nominal ($R_L = 5\,\Omega$) la tensión de salida es de 4.9602~V. Expresando la caída en función de la corriente, se obtiene una resistencia de salida efectiva de
+\begin{equation}
+R_{o} \approx \frac{\Delta V_{out}}{\Delta I_{out}} = \frac{1.51\text{ mV}}{1.240\text{ A} - 0.099\text{ A}} \approx 1.3\text{ m}\Omega.
+\end{equation}
+Este desempeño se debe al lazo de realimentación del convertidor. El amplificador de error compara la tensión del pin FEEDBACK con la referencia interna de 1.235~V y ajusta el ciclo de trabajo del interruptor para compensar las caídas resistivas en el inductor, el diodo y las pistas a medida que aumenta la corriente. La ligera mayor pendiente en la región de 4 a 10~$\Omega$ se asocia a estas pérdidas resistivas, que crecen con la corriente de carga.
+
+Por su parte, la Fig.~\ref{fig:con_barrido_corriente} muestra que la corriente de salida coincide con la curva ideal $I_{out} = V_{out}/R_L$ en todos los puntos. Va de 0.099~A en 50~$\Omega$ a 1.240~A en 4~$\Omega$, con 0.992~A en el punto nominal. Incluso en la condición de sobrecarga del 25\%, la corriente demandada representa apenas el 41\% de la capacidad máxima de 3~A del LM2596, lo que evidencia un amplio margen de operación.
+
+Al comparar con el regulador lineal (Figs.~\ref{fig:lin_barrido_voltaje} y \ref{fig:lin_barrido_corriente}), el LM2596 presenta una variación de la tensión de salida aproximadamente cuatro veces menor (1.51~mV frente a 6.56~mV) y una resistencia de salida efectiva de 1.3~m$\Omega$ frente a 5.7~m$\Omega$ del LM317. Ambos reguladores mantienen la tensión de salida dentro de un margen de pocos milivoltios ante una variación de la corriente de carga superior a un orden de magnitud. El convertidor conmutado ofrece además un margen de corriente considerablemente mayor (3~A frente a 1.5~A).
+
+\subsubsection{\textbf{Resultados de la Simulación}}
+Los resultados de simulación del convertidor se presentan en las Figs.~\ref{fig:con_potencias}, \ref{fig:con_eficiencia} y \ref{fig:con_rizado_sim}.
+
+\FloatBarrier
+\subsection{\textbf{Resultados de Laboratorio}}
+La validación experimental del convertidor conmutado se realizó con el mismo montaje e instrumentación empleados para el regulador lineal.
+
+\subsubsection{\textbf{Montaje Experimental}}
+\begin{figure}[!htb]
+\begin{center}
+\includegraphics[width=0.7\columnwidth]{con_montaje.png}
+\end{center}
+\caption{Montaje experimental del convertidor reductor LM2596: transformador reductor y etapa de rectificación, módulo bajo prueba, carga resistiva de $5\,\Omega$ e instrumentos de medición.}
+\label{fig:con_montaje}
+\end{figure}
+
+\subsubsection{\textbf{Potencias y Eficiencia}}
+La Tabla~\ref{tab:con_resultados_lab} presenta las potencias, la eficiencia y el rizado medidos para una tensión de entrada de 12 VDC. La potencia de 4.69~W entregada a la carga de $5\,\Omega$ corresponde a una tensión de salida efectiva de aproximadamente 4.84~V.
+
+\begin{table}[!htb]
+\caption{Resultados experimentales del regulador conmutado LM2596.}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{$V_{in}$ (V)} & \textbf{$P_{in}$ (W)} & \textbf{$P_{out}$ (W)} & \textbf{$\eta$ (\%)} & 
+\textbf{Rizado (mV)} \\
+\hline
+12 & 6.77 & 4.69 & 69.27 & 24 \\
+\hline
+\end{tabular}
+\label{tab:con_resultados_lab}
+\end{center}
+\end{table}
+
+\subsubsection{\textbf{Rizado}}
+El rizado a la salida se midió con el osciloscopio en acoplamiento AC, operando el módulo a carga nominal (Fig.~\ref{fig:con_rizado_real}).
+
+\begin{figure}[!htb]
+\centerline{\includegraphics[width=\columnwidth]{rizado_hoy.jpeg}}
+\caption{Rizado de la tensión de salida del convertidor reductor LM2596 medido con osciloscopio en acoplamiento AC a carga nominal.}
+\label{fig:con_rizado_real}
+\end{figure}
+
+\subsubsection{\textbf{Temperatura}}
+La temperatura del circuito integrado y del inductor se registró con termómetro infrarrojo durante la operación a carga nominal. Ver video: \href{https://youtube.com/shorts/6KLcBZMcJUU?si=lLvplvPJONTKBNkk}{\textcolor{blue}{\underline{\textbf{Temperatura módulo conmutado (clic aquí)}}}}.
+
+\FloatBarrier
+\subsection{\textbf{Análisis Térmico}}
+
+\subsubsection{\textbf{Disipación de Potencia en el LM2596}}
+En el convertidor conmutado la potencia disipada se obtiene a partir de la eficiencia, ya que las pérdidas se reparten entre la conmutación del transistor interno, la conducción del diodo y las pérdidas en el inductor:
+\begin{equation}
+P_{loss\_LM2596} = P_{in} - P_{out} = P_{out} \cdot \left(\frac{1}{\eta} - 1\right).
+\label{eq:potencia_conmutada}
+\end{equation}
+
+\begin{equation}
+P_{loss\_LM2596} = P_{in} - P_{out} = 6.77\text{ W} - 4.69\text{ W} = 2.08\text{ W}.
+\end{equation}
+
+Aplicando el modelo de la Ec.~(\ref{eq:ley_ohm_termica}) con la resistencia térmica juntura-ambiente del encapsulado, se estima la temperatura de juntura:
+\begin{equation}
+T_{J\_LM2596} = 24.0\,^{\circ}\text{C} + (2.08\text{ W}) \cdot (32\,^{\circ}\text{C/W}) = 90.6\,^{\circ}\text{C}.
+\end{equation}
+Este valor corresponde a la temperatura estimada de la juntura interna del circuito integrado, mientras que los 46.0~$^{\circ}$C medidos por termometría infrarroja corresponden a la superficie de la cápsula. Ambos se mantienen por debajo del límite de 125~$^{\circ}$C del dispositivo \cite{lm2596}.
+%==========================================================
+\section{\textbf{Análisis Comparativo}}
+
+\FloatBarrier
+\subsection{\textbf{Eficiencia y Potencia Disipada}}
+La eficiencia energética ($\eta$) constituye la diferencia técnica más crítica entre ambas topologías. En el regulador lineal LM317, el transistor de paso interno actúa como una resistencia variable que disipa como calor la diferencia entre la tensión de entrada y la de salida ($V_{in} - V_{out}$). En la condición más exigente de entrada ($V_{in} = 12\text{ VDC}$ e $I_{out} = 1\text{ A}$), el LM317 demanda $12.64\text{ W}$ de la fuente para entregar únicamente $4.84\text{ W}$ a la carga, con una eficiencia medida en laboratorio de 38.3\% y una potencia disipada en calor de 7.80 W.
+
+Por el contrario, el módulo conmutado LM2596 bajo las mismas condiciones de prueba ($12\text{ VDC}$, $1\text{ A}$) consume $6.77\text{ W}$ de la fuente y entrega $4.69\text{ W}$ a la carga. Su eficiencia se eleva a 69.2\% y disipa solo 2.08 W, frente a 38.3\% del lineal.
+
+La eficiencia medida del LM2596 es inferior tanto a la obtenida en simulación (Fig.~\ref{fig:con_eficiencia}) como a los valores típicos superiores al 80\% reportados por el fabricante \cite{lm2596}. Esta diferencia se atribuye a pérdidas que el modelo no representa por completo: la caída real del diodo de rueda libre, la resistencia del devanado del inductor, la ESR de los capacitores electrolíticos del módulo, las resistencias de contacto de borneras y cables, y la incertidumbre de medir con multímetro una corriente de entrada pulsante. Aun así, el conmutado prácticamente duplica la eficiencia del regulador lineal.
+
+\FloatBarrier
+\subsection{\textbf{Tensión de rizado de Salida}}
+Ambas topologías cumplieron estrictamente con la especificación del proyecto al mantener el rizado pico a pico de tensión de salida por debajo del límite de $50\text{ mV}_{p-p}$. El regulador lineal LM317 obtuvo un menor ripple y destaca por su elevado factor de rechazo al voltaje de entrada, registrando un rizado extremadamente bajo de $14.4\text{ mV}_{p-p}$. Esta componente continua es limpia e ideal para etapas analógicas de alta sensibilidad. El LM2596 presentó un rizado de $24\text{ mV}_{p-p}$, dominado por la frecuencia de conmutación de 150~kHz, que también cumple la especificación.
+
+En ambos casos el rizado medido es mayor que el simulado (1.2~mV y 6.8~mV, respectivamente). Esto se explica por el ruido de conmutación y de red captado por la punta y el cable de tierra del osciloscopio, por la ESR real de los capacitores y por el ancho de banda completo del instrumento, factores que la simulación no incluye.
+
+\FloatBarrier
+\subsection{\textbf{Comportamiento Térmico y Gestión de Disipación}}
+La disparidad en las pérdidas de potencia se traduce directamente en la elevación de temperatura sobre los semiconductores ($\Delta T = T_{medida} - T_A$). Operando a $V_{in} = 12\text{ VDC}$ e $I_{out} = 1\text{ A}$ en estado estacionario ($t = 70\text{ s}$), el circuito integrado LM317 superó los $60.0\,^{\circ}\text{C}$ en su cápsula a los 70~s y alcanzó $68.5\,^{\circ}\text{C}$ al final de la prueba, todavía en ascenso. Con 7.80~W disipados, el disipador de aluminio es indispensable para evitar la activación del apagado térmico interno; la resistencia térmica estimada para el disipador del módulo fue $\theta_{SA} \approx 5.2\,^{\circ}\text{C/W}$.
+
+\smallskip
+En contraste, la menor potencia disipada en el módulo LM2596 ($2.08\text{ W}$) se disipa de forma natural mediante el vertido de cobre de la placa de circuito impreso ($\theta_{JA\_LM2596} \approx 32.0\,^{\circ}\text{C/W}$). La temperatura máxima de operación registrada por termometría infrarroja a los $70\text{ s}$ fue de apenas $46.0\,^{\circ}\text{C}$ ($\Delta T = +21.3\,^{\circ}\text{C}$ respecto al ambiente de $24.7\,^{\circ}\text{C}$), manteniendo el módulo tibio y totalmente estable sin la necesidad de adicionar un disipador metálico voluminoso.
+
+\FloatBarrier
+\subsection{\textbf{Matriz Tamaño-Costo-Beneficio}}
+Para seleccionar la solución técnica óptima, se evaluaron los parámetros de tamaño, costo comercial y beneficio energético, los cuales se sintetizan en la Tabla~\ref{tab:matriz_tcb_completa}.
+
+\begin{table*}[!t]
+\caption{Matriz comparativa de evaluación multicriterio: Tamaño, Costo y Beneficio}
+\label{tab:matriz_tcb_completa}
+\begin{center}
+\resizebox{1\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Criterio / Factor}} & \textbf{Regulador Lineal (LM317)} & \textbf{Regulador Conmutado (LM2596)} & \textbf{Análisis de Viabilidad Técnica} \\
+\hline
+\textbf{1. TAMAÑO} & & & \\
+-- Área física total en placa & Grande (Volumen del disipador de Al) & \textbf{Compacta} (Sin disipador externo) & Ventaja significativa del \textbf{LM2596} \\
+-- Componentes reactivos pasivos & Mínimo (Capacitores pequeños) & Moderado (Inductor $33\,\mu\text{H}$ y filtro LC) & Pasivos ligeramente mayores en el LM2596 \\
+\hline
+\textbf{2. COSTO (Económico)} & & & \\
+-- Precio comercial del módulo & \$7.000 COP (+ IVA) & \textbf{\$6.900 COP} & Costos iniciales equivalentes \\
+-- Elemento de disipación & Incluido en el módulo (aumenta volumen) & \textbf{No requiere} (cobre de la PCB) & El LM317 depende del disipador \\
+\hline
+\textbf{3. BENEFICIO (Rendimiento)} & & & \\
+-- Eficiencia energética ($\eta$) & 38.3\% (Baja, $7.80\text{ W}$ disipados) & \textbf{69.2\%} (Alta, $2.08\text{ W}$ disipados) & \textbf{LM2596}: +30.9 puntos porcentuales \\
+-- Calidad de tensión / Rizado & \textbf{14.4 mV} (Excelente PSRR de 80 dB) & 24.0 mV (Muy bueno, $<50\text{ mV}$) & Ambos cumplen con la restricción $<50\text{ mV}$ \\
+-- Temperatura de cápsula a 70 s & $>60.0\,^{\circ}\text{C}$ (Riesgo térmico alto) & \textbf{46.0}\,$^{\circ}\text{C}$ (Operación segura en PCB) & El \textbf{LM2596} opera más frío \\
+\hline
+\multicolumn{1}{|c|}{\textbf{ELECCIÓN}} & \multicolumn{1}{c|}{Descartado para 1 A continuo} & \multicolumn{1}{c|}{\textbf{\checkmark Seleccionado }} & \multicolumn{1}{c|}{\textbf{LM2596} ofrece la solución óptima} \\
+\hline
+\end{tabular}%
+}
+\end{center}
+\end{table*}
+
+\FloatBarrier
+\subsection{\textbf{Evolución Temporal de la Temperatura}}
+Para comparar el desempeño térmico de ambos módulos se registró la temperatura de cada uno cada 10 s mediante termometría infrarroja, operando con $V_{in}=12$ VDC e $I_{out}=1$ A. Los resultados se presentan en la Tabla~\ref{tab:evolucion_termica}, donde $\Delta T$ corresponde al incremento respecto a la lectura anterior. A los 70 s el LM317 supera los 60 $^{\circ}$C, mientras que el LM2596 se mantiene en 46.0 $^{\circ}$C, lo que evidencia la menor potencia disipada por el convertidor conmutado. Las Figs.~\ref{fig:temp_lm317} y \ref{fig:temp_lm2596} muestran la evolución temporal de cada módulo.
+
+\begin{table}[!htb]
+\caption{Registros de elevación de temperatura medidos por termometría infrarroja ($V_{in}=12\text{ VDC}$, $I_{out}=1\text{ A}$).}
+\begin{center}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Tiempo (s)} & \textbf{$T_{\text{LM317}}$ ($^{\circ}$C)} & \textbf{$T_{\text{LM2596}}$ ($^{\circ}$C)} & \textbf{$\Delta T_{\text{LM317}}$} & \textbf{$\Delta T_{\text{LM2596}}$} \\
+\hline
+0 (Ambiente) & 24.7 & 24.7 & $+0.0\,^{\circ}\text{C}$ & $+0.0\,^{\circ}\text{C}$ \\
+\hline
+10 & 28.6 & 33.6 & $+3.9\,^{\circ}\text{C}$ & $+8.9\,^{\circ}\text{C}$ \\
+\hline
+20 & 33.5 & 36.0 & $+4.9\,^{\circ}\text{C}$ & $+2.4\,^{\circ}\text{C}$ \\
+\hline
+30 & 36.3 & 37.5 & $+2.8\,^{\circ}\text{C}$ & $+1.5\,^{\circ}\text{C}$ \\
+\hline
+40 & 41.8 & 39.7 & $+5.5\,^{\circ}\text{C}$ & $+2.2\,^{\circ}\text{C}$ \\
+\hline
+50 & 49.1 & 41.1 & $+7.3\,^{\circ}\text{C}$ & $+4.4\,^{\circ}\text{C}$ \\
+\hline
+60 & 57.4 & 41.9 & $+8.3\,^{\circ}\text{C}$ & $+0.8\,^{\circ}\text{C}$ \\
+\hline
+70 & \textbf{$>$60.0} & \textbf{46.0} & \textbf{$+2.6\,^{\circ}\text{C}$} & \textbf{$+4.1\,^{\circ}\text{C}$} \\
+\hline
+\end{tabular}%
+}
+\label{tab:evolucion_termica}
+\end{center}
+\end{table}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\linewidth]{temp_lm317.jpg}
+\caption{Evolución temporal de la temperatura del módulo LM317 medida por termometría infrarroja ($V_{in}=12$ VDC, $I_{out}=1$ A).}
+\label{fig:temp_lm317}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\linewidth]{temp_lm2596.jpg}
+\caption{Evolución temporal de la temperatura del módulo LM2596 medida por termometría infrarroja ($V_{in}=12$ VDC, $I_{out}=1$ A).}
+\label{fig:temp_lm2596}
+\end{figure}
+
+%==========================================================
+\section{\textbf{Conclusiones}}
+
+\begin{enumerate}
+    \item Se demostró experimental y teóricamente la superioridad energética del módulo conmutado LM2596 frente al regulador lineal LM317 para una demanda de $1.0\text{ A}$ continuo, registrando una eficiencia del $69.2\%$ frente a un $38.3\%$ bajo la condición crítica de entrada ($12\text{ VDC}$), lo que representa una reducción del $73\%$ en la potencia desperdiciada (de 7.80~W a 2.08~W) en forma de calor.
+    \item Ambos módulos cumplieron ampliamente con la restricción de calidad de la tensión de salida, registrando rizados pico a pico inferiores al límite exigido de $50\text{ mV}_{p-p}$ ($14.4\text{ mV}_{p-p}$ para el LM317 debido a su alto PSRR y $24.0\text{ mV}_{p-p}$ para el LM2596 con filtrado LC de salida).
+    \item El análisis del perfil térmico por termometría infrarroja confirmó que el LM317 exige obligatoriamente un disipador metálico de aluminio para mantenerse dentro de su rango seguro de operación (cápsula por encima de $60\,^{\circ}\text{C}$ a los $70\text{ s}$), mientras que la cápsula del módulo LM2596 se mantiene en $46.0\,^{\circ}\text{C}$ operando por disipación natural en PCB.
+    \item En la evaluación global tamaño-costo-beneficio, el módulo conmutado LM2596 se consolida como la solución óptima para aplicaciones de electrónica industrial a $1\text{ A}$, al ofrecer mayor rendimiento energético, una menor huella volumétrica total (al prescindir de disipador externo) y un costo de implementación equivalente al del regulador lineal.
+    \item Las simulaciones transitorias en régimen permanente validaron el límite teórico de eficiencia ($\eta \approx V_{out}/V_{in}$) para la topología lineal LM317, registrando un valor promedio de $44.30\%$ bajo la condición nominal ($11.26\text{ V}_{in\_prom}$, $1.0\text{ A}$), con una disipación de potencia en el elemento de paso de $6.33\text{ W}$. En contraste, la simulación de la topología Buck conmutada basada en el LM2596 demostró una conservación de energía superior ($\eta \approx 94.8\%$ según la Fig.~\ref{fig:con_eficiencia}), gracias al control por modulación por ancho de pulso (PWM) a $150\text{ kHz}$ y a las reducidas pérdidas por conducción en el MOSFET interno y el diodo Schottky. La diferencia frente al 69.2\% medido se debe a pérdidas reales del módulo y del montaje que el modelo no representa.
+    \item El modelo del LM317 demostró un elevado factor de rechazo a la tensión de alimentación ($\text{PSRR} \approx 80\text{ dB}$ a $120\text{ Hz}$), atenuando la ondulación de entrada procedente de la etapa rectificadora hasta alcanzar un rizado simulado de apenas $1.204\text{ mV}_{p-p}$ ($0.024\%$ de la tensión nominal). Para el convertidor conmutado LM2596, el filtro LC de salida ($33\,\mu\text{H}$ y $470\,\mu\text{F}$) contuvo la componente de rizado de conmutación ($150\text{ kHz}$) en $\approx 6.8\text{ mV}_{p-p}$ (Fig.~\ref{fig:con_rizado_sim}), ubicándose ambos sistemas holgadamente por debajo del límite estricto de $50\text{ mV}_{p-p}$ exigido por las especificaciones del proyecto.
+    \item El barrido paramétrico de temperatura del LM2596 (10 a 45~$^{\circ}$C) mostró una variación máxima de la tensión de salida de apenas $0.18\text{ mV}$ ($<0.004\%$), atribuida al lazo de realimentación; el modelo del fabricante no incluye deriva térmica, por lo que el resultado refleja el rechazo del lazo de control. Para el LM317 se realizó un barrido equivalente (Fig.~\ref{fig:lin_temperatura}).
+\end{enumerate}
+
+%==========================================================
+\begin{thebibliography}{00}
+
+\bibitem{hart} 
+D. W. Hart, \textit{Electrónica de Potencia}, Madrid, España: Pearson Educación, 2001.
+
+\bibitem{rashid} 
+M. H. Rashid, \textit{Power Electronics: Circuits, Devices, and Applications}, 4th ed., Upper Saddle River, NJ, USA: Pearson, 2014.
+
+\bibitem{lm317}
+Texas Instruments, ``LM317 3-Pin Adjustable Regulator,'' Datasheet SLVS044. [Online]. Disponible: \url{https://www.ti.com/lit/ds/symlink/lm317.pdf}
+
+\bibitem{lm2596}
+Texas Instruments, ``LM2596 SIMPLE SWITCHER Power Converter 150-kHz 3-A Step-Down Voltage Regulator,'' Datasheet SNVS124. [Online]. Disponible: \url{https://www.ti.com/lit/ds/symlink/lm2596.pdf}
+
+\bibitem{mc7805}
+onsemi, ``MC7800, MC7800A, MC7800AE, NCV7800: 1.0 A Positive Voltage Regulators,'' Datasheet MC7800/D. [Online]. Disponible: \url{https://www.onsemi.com/pdf/datasheet/mc7800-d.pdf}
+
+\bibitem{l78s05}
+STMicroelectronics, ``L78S: 2 A Positive Voltage Regulators,'' Datasheet DocID2148. [Online]. Disponible: \url{https://www.st.com/resource/en/datasheet/l78s.pdf}
+
+\bibitem{ams1117}
+Advanced Monolithic Systems, ``AMS1117: 1A Low Dropout Voltage Regulator,'' Datasheet. [Online]. Disponible: \url{http://www.advanced-monolithic.com/pdf/ds1117.pdf}
+
+\bibitem{lm338}
+Texas Instruments, ``LM338 5-A Adjustable Voltage Regulator,'' Datasheet. [Online]. Disponible: \url{https://www.ti.com/lit/ds/symlink/lm338.pdf}
+
+\bibitem{lm2576}
+Texas Instruments, ``LM2576xx Series SIMPLE SWITCHER Power Converter 3-A Step-Down Voltage Regulator,'' Datasheet SNVS107. [Online]. Disponible: \url{https://www.ti.com/lit/ds/symlink/lm2576.pdf}
+
+\bibitem{xl4015}
+XLSEMI, ``XL4015: 5A 180KHz 36V Buck DC to DC Converter,'' Datasheet. [Online]. Disponible: \url{http://www.xlsemi.com}
+
+\bibitem{mp1584}
+Monolithic Power Systems, ``MP1584: 3A, 1.5MHz, 28V Step-Down Converter,'' Datasheet. [Online]. Disponible: \url{https://www.monolithicpower.com/en/mp1584.html}
+
+\bibitem{mp2307}
+Monolithic Power Systems, ``MP2307: 3A, 23V, 340KHz Synchronous Rectified Step-Down Converter,'' Datasheet (circuito integrado del módulo Mini-360). [Online]. Disponible: \url{https://www.monolithicpower.com}
+
+\end{thebibliography}
+\end{document}
